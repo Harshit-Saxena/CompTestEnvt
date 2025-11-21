@@ -2,6 +2,7 @@
  * @description Improved AccountService with advanced heap management
  * @author CompTestEnvt Team
  * @date 2024
+ * @jira [SF-1] - Account service with heap optimization
  */
 public with sharing class AccountService {
 
@@ -31,19 +32,19 @@ public with sharing class AccountService {
     private static final Integer INITIAL_LOAD_SIZE = 50;
 
     /**
-     * @description Get accounts with intelligent pagination and heap management
-     * @param pageNumber Current page number (1-based)
-     * @param pageSize Records per page
-     * @param filterType Optional filter (Customer, Prospect, Partner, etc.)
-     * @param searchTerm Optional search term for name
-     * @return AccountServiceResponse with accounts and metadata
-     */
+    * @description Get accounts with intelligent pagination and heap management
+    * @param pageNumber Current page number (1-based)
+    * @param pageSize Records per page
+    * @param filterType Optional filter (Customer, Prospect, Partner, etc.)
+    * @param searchTerm Optional search term for name
+    * @return AccountServiceResponse with accounts and metadata
+    */
     @AuraEnabled(cacheable=true)
     public static AccountServiceResponse getAccounts(
-        Integer pageNumber,
-        Integer pageSize,
-        String filterType,
-        String searchTerm
+    Integer pageNumber,
+    Integer pageSize,
+    String filterType,
+    String searchTerm
     ) {
         AccountServiceResponse response = new AccountServiceResponse();
         Long startTime = System.currentTimeMillis();
@@ -75,7 +76,7 @@ public with sharing class AccountService {
 
             // Get paginated results
             LargeDataProcessor.PaginatedResult result =
-                LargeDataProcessor.getPaginatedRecords(query, pageNumber, pageSize);
+            LargeDataProcessor.getPaginatedRecords(query, pageNumber, pageSize);
 
             // Map results to response
             response.accounts = (List<Account>)result.records;
@@ -102,15 +103,15 @@ public with sharing class AccountService {
     }
 
     /**
-     * @description Get accounts using streaming for large datasets
-     * @param batchSize Size of each batch
-     * @param maxRecords Maximum records to retrieve
-     * @return List of AccountServiceResponse batches
-     */
+    * @description Get accounts using streaming for large datasets
+    * @param batchSize Size of each batch
+    * @param maxRecords Maximum records to retrieve
+    * @return List of AccountServiceResponse batches
+    */
     @AuraEnabled
     public static List<AccountServiceResponse> getAccountsInBatches(
-        Integer batchSize,
-        Integer maxRecords
+    Integer batchSize,
+    Integer maxRecords
     ) {
         List<AccountServiceResponse> responses = new List<AccountServiceResponse>();
         batchSize = (batchSize == null) ? DEFAULT_PAGE_SIZE : batchSize;
@@ -118,11 +119,11 @@ public with sharing class AccountService {
 
         try {
             String query = 'SELECT Id, Name, Phone, Type, Industry, BillingCity, ' +
-                          'BillingState, AnnualRevenue, NumberOfEmployees ' +
-                          'FROM Account ORDER BY CreatedDate DESC';
+            'BillingState, AnnualRevenue, NumberOfEmployees ' +
+            'FROM Account ORDER BY CreatedDate DESC';
 
             LargeDataProcessor.DataStream stream =
-                new LargeDataProcessor.DataStream(query, batchSize);
+            new LargeDataProcessor.DataStream(query, batchSize);
 
             Integer totalProcessed = 0;
 
@@ -158,15 +159,15 @@ public with sharing class AccountService {
     }
 
     /**
-     * @description Process large account updates efficiently
-     * @param accountIds List of account IDs to update
-     * @param fieldUpdates Map of field names to values
-     * @return Boolean success status
-     */
+    * @description Process large account updates efficiently
+    * @param accountIds List of account IDs to update
+    * @param fieldUpdates Map of field names to values
+    * @return Boolean success status
+    */
     @AuraEnabled
     public static Boolean updateAccountsEfficiently(
-        List<Id> accountIds,
-        Map<String, Object> fieldUpdates
+    List<Id> accountIds,
+    Map<String, Object> fieldUpdates
     ) {
         if (accountIds == null || accountIds.isEmpty() || fieldUpdates == null) {
             return false;
@@ -175,7 +176,7 @@ public with sharing class AccountService {
         try {
             // Process in chunks to avoid heap issues
             List<List<Object>> idChunks = MemoryOptimizer.splitIntoChunks(
-                new List<Object>(accountIds), 200
+            new List<Object>(accountIds), 200
             );
 
             for (List<Object> chunk : idChunks) {
@@ -191,8 +192,8 @@ public with sharing class AccountService {
 
                 // Query and update accounts
                 List<Account> accounts = [
-                    SELECT Id FROM Account
-                    WHERE Id IN :chunkIds
+                SELECT Id FROM Account
+                WHERE Id IN :chunkIds
                 ];
 
                 for (Account acc : accounts) {
@@ -216,9 +217,9 @@ public with sharing class AccountService {
     }
 
     /**
-     * @description Get account statistics with memory optimization
-     * @return Map of statistics
-     */
+    * @description Get account statistics with memory optimization
+    * @return Map of statistics
+    */
     @AuraEnabled(cacheable=true)
     public static Map<String, Object> getAccountStatistics() {
         Map<String, Object> stats = new Map<String, Object>();
@@ -229,36 +230,36 @@ public with sharing class AccountService {
 
             // Get type distribution
             List<AggregateResult> typeResults = [
-                SELECT Type, COUNT(Id) cnt
-                FROM Account
-                WHERE Type != null
-                GROUP BY Type
-                LIMIT 10
+            SELECT Type, COUNT(Id) cnt
+            FROM Account
+            WHERE Type != null
+            GROUP BY Type
+            LIMIT 10
             ];
 
             Map<String, Integer> typeDistribution = new Map<String, Integer>();
             for (AggregateResult ar : typeResults) {
                 typeDistribution.put(
-                    (String)ar.get('Type'),
-                    (Integer)ar.get('cnt')
+                (String)ar.get('Type'),
+                (Integer)ar.get('cnt')
                 );
             }
             stats.put('typeDistribution', typeDistribution);
 
             // Get industry distribution
             List<AggregateResult> industryResults = [
-                SELECT Industry, COUNT(Id) cnt
-                FROM Account
-                WHERE Industry != null
-                GROUP BY Industry
-                LIMIT 10
+            SELECT Industry, COUNT(Id) cnt
+            FROM Account
+            WHERE Industry != null
+            GROUP BY Industry
+            LIMIT 10
             ];
 
             Map<String, Integer> industryDistribution = new Map<String, Integer>();
             for (AggregateResult ar : industryResults) {
                 industryDistribution.put(
-                    (String)ar.get('Industry'),
-                    (Integer)ar.get('cnt')
+                (String)ar.get('Industry'),
+                (Integer)ar.get('cnt')
                 );
             }
             stats.put('industryDistribution', industryDistribution);
@@ -276,12 +277,12 @@ public with sharing class AccountService {
     }
 
     /**
-     * @description Build dynamic SOQL query for accounts
-     */
+    * @description Build dynamic SOQL query for accounts
+    */
     private static String buildAccountQuery(String filterType, String searchTerm) {
         String query = 'SELECT Id, Name, Phone, Type, Industry, BillingCity, ' +
-                      'BillingState, AnnualRevenue, NumberOfEmployees, CreatedDate ' +
-                      'FROM Account';
+        'BillingState, AnnualRevenue, NumberOfEmployees, CreatedDate ' +
+        'FROM Account';
 
         List<String> conditions = new List<String>();
 
@@ -303,8 +304,8 @@ public with sharing class AccountService {
     }
 
     /**
-     * @description Optimize account list for memory efficiency
-     */
+    * @description Optimize account list for memory efficiency
+    */
     private static void optimizeAccountList(List<Account> accounts) {
         // Keep only essential fields for large lists
         Set<String> essentialFields = new Set<String>{
@@ -315,7 +316,7 @@ public with sharing class AccountService {
     }
 
     /**
-     * @description Custom exception for heap issues
-     */
+    * @description Custom exception for heap issues
+    */
     public class HeapException extends Exception {}
 }

@@ -2,6 +2,7 @@
  * @description MemoryOptimizer - Advanced memory optimization utilities
  * @author CompTestEnvt Team
  * @date 2024
+ * @jira [SF-1] - Memory optimization utilities for Salesforce
  */
 public with sharing class MemoryOptimizer {
 
@@ -10,8 +11,8 @@ public with sharing class MemoryOptimizer {
     private static final Integer STRING_POOL_LIMIT = 100;
 
     /**
-     * @description Optimization statistics
-     */
+    * @description Optimization statistics
+    */
     public class OptimizationStats {
         @AuraEnabled public Integer initialHeap {get; set;}
         @AuraEnabled public Integer finalHeap {get; set;}
@@ -35,14 +36,14 @@ public with sharing class MemoryOptimizer {
     }
 
     /**
-     * @description Optimize SObject list by removing unnecessary fields
-     * @param records List of SObjects to optimize
-     * @param fieldsToKeep Set of field API names to retain
-     * @return OptimizationStats with results
-     */
+    * @description Optimize SObject list by removing unnecessary fields
+    * @param records List of SObjects to optimize
+    * @param fieldsToKeep Set of field API names to retain
+    * @return OptimizationStats with results
+    */
     public static OptimizationStats optimizeSObjectList(
-        List<SObject> records,
-        Set<String> fieldsToKeep
+    List<SObject> records,
+    Set<String> fieldsToKeep
     ) {
         OptimizationStats stats = new OptimizationStats();
         Long startTime = System.currentTimeMillis();
@@ -86,10 +87,10 @@ public with sharing class MemoryOptimizer {
     }
 
     /**
-     * @description Deduplicate strings in collections to reduce memory
-     * @param strings List of strings to deduplicate
-     * @return Integer number of duplicates removed
-     */
+    * @description Deduplicate strings in collections to reduce memory
+    * @param strings List of strings to deduplicate
+    * @return Integer number of duplicates removed
+    */
     public static Integer deduplicateStrings(List<String> strings) {
         if (strings == null || strings.size() < 2) {
             return 0;
@@ -123,10 +124,10 @@ public with sharing class MemoryOptimizer {
     }
 
     /**
-     * @description Compress large map by removing null/empty values
-     * @param dataMap Map to compress
-     * @return Integer number of entries removed
-     */
+    * @description Compress large map by removing null/empty values
+    * @param dataMap Map to compress
+    * @return Integer number of entries removed
+    */
     public static Integer compressMap(Map<String, Object> dataMap) {
         if (dataMap == null || dataMap.isEmpty()) {
             return 0;
@@ -138,10 +139,10 @@ public with sharing class MemoryOptimizer {
             Object value = dataMap.get(key);
 
             if (value == null ||
-                (value instanceof String && String.isBlank((String)value)) ||
-                (value instanceof List<Object> && ((List<Object>)value).isEmpty()) ||
-                (value instanceof Set<Object> && ((Set<Object>)value).isEmpty()) ||
-                (value instanceof Map<Object, Object> && ((Map<Object, Object>)value).isEmpty())) {
+            (value instanceof String && String.isBlank((String)value)) ||
+            (value instanceof List<Object> && ((List<Object>)value).isEmpty()) ||
+            (value instanceof Set<Object> && ((Set<Object>)value).isEmpty()) ||
+            (value instanceof Map<Object, Object> && ((Map<Object, Object>)value).isEmpty())) {
 
                 keysToRemove.add(key);
             }
@@ -155,11 +156,11 @@ public with sharing class MemoryOptimizer {
     }
 
     /**
-     * @description Split large collection into smaller chunks for processing
-     * @param largeList Large list to split
-     * @param chunkSize Size of each chunk
-     * @return List of chunks
-     */
+    * @description Split large collection into smaller chunks for processing
+    * @param largeList Large list to split
+    * @param chunkSize Size of each chunk
+    * @return List of chunks
+    */
     public static List<List<Object>> splitIntoChunks(List<Object> largeList, Integer chunkSize) {
         List<List<Object>> chunks = new List<List<Object>>();
 
@@ -188,8 +189,8 @@ public with sharing class MemoryOptimizer {
     }
 
     /**
-     * @description Lazy load pattern for expensive objects
-     */
+    * @description Lazy load pattern for expensive objects
+    */
     public class LazyLoader {
         private Map<String, Object> cache;
         private Map<String, LoaderFunction> loaders;
@@ -200,198 +201,198 @@ public with sharing class MemoryOptimizer {
         }
 
         /**
-         * @description Register a loader function for a key
-         */
+        * @description Register a loader function for a key
+        */
         public void registerLoader(String key, LoaderFunction loader) {
             loaders.put(key, loader);
         }
 
         /**
-         * @description Get value, loading if necessary
-         */
+        * @description Get value, loading if necessary
+        */
         public Object get(String key) {
             if (!cache.containsKey(key)) {
                 if (loaders.containsKey(key)) {
                     // Check heap before loading
                     if (HeapSizeManager.hasEnoughHeap(100000)) { // 100KB buffer
-                        cache.put(key, loaders.get(key).load());
-                    } else {
-                        System.debug('Insufficient heap for lazy loading: ' + key);
-                        return null;
-                    }
+                    cache.put(key, loaders.get(key).load());
+                } else {
+                    System.debug('Insufficient heap for lazy loading: ' + key);
+                    return null;
                 }
             }
+        }
+        return cache.get(key);
+    }
+
+    /**
+    * @description Clear specific cached value
+    */
+    public void evict(String key) {
+        cache.remove(key);
+    }
+
+    /**
+    * @description Clear all cached values
+    */
+    public void evictAll() {
+        cache.clear();
+    }
+}
+
+/**
+* @description Interface for lazy loading functions
+*/
+public interface LoaderFunction {
+    Object load();
+}
+
+/**
+* @description Memory-efficient string builder
+*/
+public class EfficientStringBuilder {
+    private List<String> parts;
+    private Integer estimatedSize;
+    private static final Integer MAX_PARTS = 1000;
+
+    public EfficientStringBuilder() {
+        this.parts = new List<String>();
+        this.estimatedSize = 0;
+    }
+
+    /**
+    * @description Append string to builder
+    */
+    public EfficientStringBuilder append(String str) {
+        if (str != null && parts.size() < MAX_PARTS) {
+            parts.add(str);
+            estimatedSize += str.length();
+
+            // Check if we should consolidate
+            if (parts.size() % 100 == 0) {
+                consolidate();
+            }
+        }
+        return this;
+    }
+
+    /**
+    * @description Consolidate parts to reduce memory overhead
+    */
+    private void consolidate() {
+        if (parts.size() > 10) {
+            String consolidated = String.join(parts, '');
+            parts.clear();
+            parts.add(consolidated);
+        }
+    }
+
+    /**
+    * @description Get final string
+    */
+    public String toString() {
+        if (parts.isEmpty()) {
+            return '';
+        }
+        return String.join(parts, '');
+    }
+
+    /**
+    * @description Clear builder
+    */
+    public void clear() {
+        parts.clear();
+        estimatedSize = 0;
+    }
+
+    /**
+    * @description Get estimated size
+    */
+    public Integer getEstimatedSize() {
+        return estimatedSize;
+    }
+}
+
+/**
+* @description Optimize JSON string by removing whitespace and formatting
+* @param jsonString JSON string to optimize
+* @return Optimized JSON string
+*/
+public static String optimizeJson(String jsonString) {
+    if (String.isBlank(jsonString)) {
+        return jsonString;
+    }
+
+    try {
+        // Parse and re-serialize without formatting
+        Object parsed = JSON.deserializeUntyped(jsonString);
+        return JSON.serialize(parsed);
+    } catch (Exception e) {
+        System.debug(LoggingLevel.WARN, 'JSON optimization failed: ' + e.getMessage());
+        return jsonString;
+    }
+}
+
+/**
+* @description Cache manager with size limits
+*/
+public class BoundedCache {
+    private Map<String, Object> cache;
+    private List<String> accessOrder;
+    private Integer maxSize;
+
+    public BoundedCache(Integer maxSize) {
+        this.cache = new Map<String, Object>();
+        this.accessOrder = new List<String>();
+        this.maxSize = (maxSize == null || maxSize < 1) ? 100 : maxSize;
+    }
+
+    /**
+    * @description Put value in cache
+    */
+    public void put(String key, Object value) {
+        // Remove if exists to update access order
+        if (cache.containsKey(key)) {
+            accessOrder.remove(accessOrder.indexOf(key));
+        }
+
+        // Add to cache
+        cache.put(key, value);
+        accessOrder.add(key);
+
+        // Evict oldest if over limit
+        if (cache.size() > maxSize) {
+            String oldest = accessOrder.remove(0);
+            cache.remove(oldest);
+        }
+    }
+
+    /**
+    * @description Get value from cache
+    */
+    public Object get(String key) {
+        if (cache.containsKey(key)) {
+            // Update access order
+            accessOrder.remove(accessOrder.indexOf(key));
+            accessOrder.add(key);
             return cache.get(key);
         }
-
-        /**
-         * @description Clear specific cached value
-         */
-        public void evict(String key) {
-            cache.remove(key);
-        }
-
-        /**
-         * @description Clear all cached values
-         */
-        public void evictAll() {
-            cache.clear();
-        }
+        return null;
     }
 
     /**
-     * @description Interface for lazy loading functions
-     */
-    public interface LoaderFunction {
-        Object load();
+    * @description Clear cache
+    */
+    public void clear() {
+        cache.clear();
+        accessOrder.clear();
     }
 
     /**
-     * @description Memory-efficient string builder
-     */
-    public class EfficientStringBuilder {
-        private List<String> parts;
-        private Integer estimatedSize;
-        private static final Integer MAX_PARTS = 1000;
-
-        public EfficientStringBuilder() {
-            this.parts = new List<String>();
-            this.estimatedSize = 0;
-        }
-
-        /**
-         * @description Append string to builder
-         */
-        public EfficientStringBuilder append(String str) {
-            if (str != null && parts.size() < MAX_PARTS) {
-                parts.add(str);
-                estimatedSize += str.length();
-
-                // Check if we should consolidate
-                if (parts.size() % 100 == 0) {
-                    consolidate();
-                }
-            }
-            return this;
-        }
-
-        /**
-         * @description Consolidate parts to reduce memory overhead
-         */
-        private void consolidate() {
-            if (parts.size() > 10) {
-                String consolidated = String.join(parts, '');
-                parts.clear();
-                parts.add(consolidated);
-            }
-        }
-
-        /**
-         * @description Get final string
-         */
-        public String toString() {
-            if (parts.isEmpty()) {
-                return '';
-            }
-            return String.join(parts, '');
-        }
-
-        /**
-         * @description Clear builder
-         */
-        public void clear() {
-            parts.clear();
-            estimatedSize = 0;
-        }
-
-        /**
-         * @description Get estimated size
-         */
-        public Integer getEstimatedSize() {
-            return estimatedSize;
-        }
+    * @description Get cache size
+    */
+    public Integer size() {
+        return cache.size();
     }
-
-    /**
-     * @description Optimize JSON string by removing whitespace and formatting
-     * @param jsonString JSON string to optimize
-     * @return Optimized JSON string
-     */
-    public static String optimizeJson(String jsonString) {
-        if (String.isBlank(jsonString)) {
-            return jsonString;
-        }
-
-        try {
-            // Parse and re-serialize without formatting
-            Object parsed = JSON.deserializeUntyped(jsonString);
-            return JSON.serialize(parsed);
-        } catch (Exception e) {
-            System.debug(LoggingLevel.WARN, 'JSON optimization failed: ' + e.getMessage());
-            return jsonString;
-        }
-    }
-
-    /**
-     * @description Cache manager with size limits
-     */
-    public class BoundedCache {
-        private Map<String, Object> cache;
-        private List<String> accessOrder;
-        private Integer maxSize;
-
-        public BoundedCache(Integer maxSize) {
-            this.cache = new Map<String, Object>();
-            this.accessOrder = new List<String>();
-            this.maxSize = (maxSize == null || maxSize < 1) ? 100 : maxSize;
-        }
-
-        /**
-         * @description Put value in cache
-         */
-        public void put(String key, Object value) {
-            // Remove if exists to update access order
-            if (cache.containsKey(key)) {
-                accessOrder.remove(accessOrder.indexOf(key));
-            }
-
-            // Add to cache
-            cache.put(key, value);
-            accessOrder.add(key);
-
-            // Evict oldest if over limit
-            if (cache.size() > maxSize) {
-                String oldest = accessOrder.remove(0);
-                cache.remove(oldest);
-            }
-        }
-
-        /**
-         * @description Get value from cache
-         */
-        public Object get(String key) {
-            if (cache.containsKey(key)) {
-                // Update access order
-                accessOrder.remove(accessOrder.indexOf(key));
-                accessOrder.add(key);
-                return cache.get(key);
-            }
-            return null;
-        }
-
-        /**
-         * @description Clear cache
-         */
-        public void clear() {
-            cache.clear();
-            accessOrder.clear();
-        }
-
-        /**
-         * @description Get cache size
-         */
-        public Integer size() {
-            return cache.size();
-        }
-    }
+}
 }

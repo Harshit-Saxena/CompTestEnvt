@@ -2,6 +2,7 @@
  * @description HeapSizeManager - Comprehensive utility class for managing heap size and memory optimization
  * @author CompTestEnvt Team
  * @date 2024
+ * @jira [SF-1] - Heap size management and memory monitoring
  */
 public with sharing class HeapSizeManager {
 
@@ -17,8 +18,8 @@ public with sharing class HeapSizeManager {
     private static final Integer MAX_BATCH_SIZE = 2000;
 
     /**
-     * @description Inner class to hold heap statistics
-     */
+    * @description Inner class to hold heap statistics
+    */
     public class HeapStats {
         @AuraEnabled public Integer currentHeapSize {get; set;}
         @AuraEnabled public Integer maxHeapSize {get; set;}
@@ -34,8 +35,8 @@ public with sharing class HeapSizeManager {
     }
 
     /**
-     * @description Memory optimization result wrapper
-     */
+    * @description Memory optimization result wrapper
+    */
     public class OptimizationResult {
         @AuraEnabled public Integer recordsProcessed {get; set;}
         @AuraEnabled public Integer batchesCompleted {get; set;}
@@ -54,9 +55,9 @@ public with sharing class HeapSizeManager {
     }
 
     /**
-     * @description Get current heap statistics
-     * @return HeapStats object with current memory information
-     */
+    * @description Get current heap statistics
+    * @return HeapStats object with current memory information
+    */
     public static HeapStats getCurrentHeapStats() {
         HeapStats stats = new HeapStats();
 
@@ -84,34 +85,34 @@ public with sharing class HeapSizeManager {
     }
 
     /**
-     * @description Monitor heap usage and log if threshold exceeded
-     * @param operation String describing the current operation
-     * @return Boolean indicating if heap is within safe limits
-     */
+    * @description Monitor heap usage and log if threshold exceeded
+    * @param operation String describing the current operation
+    * @return Boolean indicating if heap is within safe limits
+    */
     public static Boolean monitorHeap(String operation) {
         HeapStats stats = getCurrentHeapStats();
 
         if (stats.status == 'CRITICAL') {
             System.debug(LoggingLevel.ERROR,
-                'CRITICAL HEAP: Operation [' + operation + '] - Used: ' +
-                formatBytes(stats.currentHeapSize) + ' of ' +
-                formatBytes(stats.maxHeapSize));
+            'CRITICAL HEAP: Operation [' + operation + '] - Used: ' +
+            formatBytes(stats.currentHeapSize) + ' of ' +
+            formatBytes(stats.maxHeapSize));
             return false;
         } else if (stats.status == 'WARNING') {
             System.debug(LoggingLevel.WARN,
-                'WARNING HEAP: Operation [' + operation + '] - Used: ' +
-                formatBytes(stats.currentHeapSize) + ' of ' +
-                formatBytes(stats.maxHeapSize));
+            'WARNING HEAP: Operation [' + operation + '] - Used: ' +
+            formatBytes(stats.currentHeapSize) + ' of ' +
+            formatBytes(stats.maxHeapSize));
         }
 
         return true;
     }
 
     /**
-     * @description Calculate optimal batch size based on available heap
-     * @param availableHeap Integer available heap in bytes
-     * @return Integer recommended batch size
-     */
+    * @description Calculate optimal batch size based on available heap
+    * @param availableHeap Integer available heap in bytes
+    * @return Integer recommended batch size
+    */
     public static Integer calculateOptimalBatchSize(Integer availableHeap) {
         // Estimate ~10KB per record (conservative estimate)
         Integer estimatedRecordSize = 10240; // 10 KB
@@ -132,16 +133,16 @@ public with sharing class HeapSizeManager {
     }
 
     /**
-     * @description Process large record sets in memory-efficient batches
-     * @param query String SOQL query to execute
-     * @param processor IRecordProcessor implementation for processing records
-     * @param maxRecords Integer maximum records to process (optional)
-     * @return OptimizationResult with processing details
-     */
+    * @description Process large record sets in memory-efficient batches
+    * @param query String SOQL query to execute
+    * @param processor IRecordProcessor implementation for processing records
+    * @param maxRecords Integer maximum records to process (optional)
+    * @return OptimizationResult with processing details
+    */
     public static OptimizationResult processBatchedRecords(
-        String query,
-        IRecordProcessor processor,
-        Integer maxRecords
+    String query,
+    IRecordProcessor processor,
+    Integer maxRecords
     ) {
         OptimizationResult result = new OptimizationResult();
         Integer offset = 0;
@@ -153,8 +154,8 @@ public with sharing class HeapSizeManager {
                 // Get current heap stats and determine batch size
                 HeapStats stats = getCurrentHeapStats();
                 Integer batchSize = Math.min(
-                    stats.recommendedBatchSize,
-                    maxRecords - totalProcessed
+                stats.recommendedBatchSize,
+                maxRecords - totalProcessed
                 );
 
                 if (stats.status == 'CRITICAL') {
@@ -185,7 +186,7 @@ public with sharing class HeapSizeManager {
                 // Force garbage collection hint
                 if (result.batchesCompleted % 5 == 0) {
                     System.debug('Processed ' + totalProcessed + ' records in ' +
-                               result.batchesCompleted + ' batches');
+                    result.batchesCompleted + ' batches');
                 }
             }
 
@@ -202,9 +203,9 @@ public with sharing class HeapSizeManager {
     }
 
     /**
-     * @description Clear collection and free memory
-     * @param collection Object collection to clear (List, Set, or Map)
-     */
+    * @description Clear collection and free memory
+    * @param collection Object collection to clear (List, Set, or Map)
+    */
     public static void clearCollection(Object collection) {
         if (collection == null) return;
 
@@ -223,11 +224,11 @@ public with sharing class HeapSizeManager {
     }
 
     /**
-     * @description Optimize large string operations
-     * @param largeString String to process
-     * @param chunkSize Integer size of each chunk
-     * @return List of string chunks
-     */
+    * @description Optimize large string operations
+    * @param largeString String to process
+    * @param chunkSize Integer size of each chunk
+    * @return List of string chunks
+    */
     public static List<String> chunkString(String largeString, Integer chunkSize) {
         List<String> chunks = new List<String>();
 
@@ -254,11 +255,11 @@ public with sharing class HeapSizeManager {
     }
 
     /**
-     * @description Safely query records with heap monitoring
-     * @param query String SOQL query
-     * @param limitSize Integer max records to return
-     * @return List of SObjects or empty list if heap exceeded
-     */
+    * @description Safely query records with heap monitoring
+    * @param query String SOQL query
+    * @param limitSize Integer max records to return
+    * @return List of SObjects or empty list if heap exceeded
+    */
     public static List<SObject> safeQuery(String query, Integer limitSize) {
         HeapStats stats = getCurrentHeapStats();
 
@@ -280,10 +281,10 @@ public with sharing class HeapSizeManager {
     }
 
     /**
-     * @description Format bytes to human readable format
-     * @param bytes Integer number of bytes
-     * @return String formatted size (e.g., "2.5 MB")
-     */
+    * @description Format bytes to human readable format
+    * @param bytes Integer number of bytes
+    * @return String formatted size (e.g., "2.5 MB")
+    */
     public static String formatBytes(Integer bytes) {
         if (bytes < 1024) {
             return bytes + ' B';
@@ -295,21 +296,21 @@ public with sharing class HeapSizeManager {
     }
 
     /**
-     * @description Check if we have enough heap for an operation
-     * @param requiredHeap Integer required heap in bytes
-     * @return Boolean true if enough heap available
-     */
+    * @description Check if we have enough heap for an operation
+    * @param requiredHeap Integer required heap in bytes
+    * @return Boolean true if enough heap available
+    */
     public static Boolean hasEnoughHeap(Integer requiredHeap) {
         HeapStats stats = getCurrentHeapStats();
         return stats.availableHeap > (requiredHeap + SAFE_HEAP_BUFFER);
     }
 
     /**
-     * @description Optimize map for memory efficiency
-     * @param sourceMap Map to optimize
-     * @param keepKeys Set of keys to retain (null = keep all)
-     * @return Integer bytes saved
-     */
+    * @description Optimize map for memory efficiency
+    * @param sourceMap Map to optimize
+    * @param keepKeys Set of keys to retain (null = keep all)
+    * @return Integer bytes saved
+    */
     public static Integer optimizeMap(Map<String, Object> sourceMap, Set<String> keepKeys) {
         if (sourceMap == null || sourceMap.isEmpty()) {
             return 0;
@@ -336,8 +337,8 @@ public with sharing class HeapSizeManager {
     }
 
     /**
-     * @description Interface for record processing
-     */
+    * @description Interface for record processing
+    */
     public interface IRecordProcessor {
         void process(List<SObject> records);
     }

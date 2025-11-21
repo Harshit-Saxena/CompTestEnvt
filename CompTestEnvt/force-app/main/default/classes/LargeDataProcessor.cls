@@ -2,6 +2,7 @@
  * @description LargeDataProcessor - Handles large data sets without async Apex
  * @author CompTestEnvt Team
  * @date 2024
+ * @jira [SF-1] - Implement large data processing with heap optimization
  */
 public with sharing class LargeDataProcessor {
 
@@ -11,8 +12,8 @@ public with sharing class LargeDataProcessor {
     private static final Integer HEAP_CHECK_FREQUENCY = 5; // Check heap every N iterations
 
     /**
-     * @description Wrapper for paginated results
-     */
+    * @description Wrapper for paginated results
+    */
     public class PaginatedResult {
         @AuraEnabled public List<SObject> records {get; set;}
         @AuraEnabled public Integer totalRecords {get; set;}
@@ -34,8 +35,8 @@ public with sharing class LargeDataProcessor {
     }
 
     /**
-     * @description Configuration for processing large data sets
-     */
+    * @description Configuration for processing large data sets
+    */
     public class ProcessingConfig {
         public String query {get; set;}
         public Integer chunkSize {get; set;}
@@ -54,8 +55,8 @@ public with sharing class LargeDataProcessor {
     }
 
     /**
-     * @description Stream-like processor for large data sets
-     */
+    * @description Stream-like processor for large data sets
+    */
     public class DataStream {
         private String baseQuery;
         private Integer currentOffset;
@@ -71,9 +72,9 @@ public with sharing class LargeDataProcessor {
         }
 
         /**
-         * @description Get next batch of records
-         * @return List of SObjects or empty list
-         */
+        * @description Get next batch of records
+        * @return List of SObjects or empty list
+        */
         public List<SObject> next() {
             if (!hasMore) {
                 return new List<SObject>();
@@ -88,8 +89,8 @@ public with sharing class LargeDataProcessor {
 
             // Adjust chunk size based on available heap
             Integer adjustedSize = Math.min(
-                chunkSize,
-                lastHeapStats.recommendedBatchSize
+            chunkSize,
+            lastHeapStats.recommendedBatchSize
             );
 
             try {
@@ -124,16 +125,16 @@ public with sharing class LargeDataProcessor {
     }
 
     /**
-     * @description Get paginated records with heap optimization
-     * @param query String SOQL query (without LIMIT/OFFSET)
-     * @param pageNumber Integer page number (1-based)
-     * @param pageSize Integer records per page
-     * @return PaginatedResult with records and metadata
-     */
+    * @description Get paginated records with heap optimization
+    * @param query String SOQL query (without LIMIT/OFFSET)
+    * @param pageNumber Integer page number (1-based)
+    * @param pageSize Integer records per page
+    * @return PaginatedResult with records and metadata
+    */
     public static PaginatedResult getPaginatedRecords(
-        String query,
-        Integer pageNumber,
-        Integer pageSize
+    String query,
+    Integer pageNumber,
+    Integer pageSize
     ) {
         Long startTime = System.currentTimeMillis();
         PaginatedResult result = new PaginatedResult();
@@ -182,14 +183,14 @@ public with sharing class LargeDataProcessor {
     }
 
     /**
-     * @description Process records in chunks with custom logic
-     * @param config ProcessingConfig configuration object
-     * @param processor Custom processor implementation
-     * @return Integer total records processed
-     */
+    * @description Process records in chunks with custom logic
+    * @param config ProcessingConfig configuration object
+    * @param processor Custom processor implementation
+    * @return Integer total records processed
+    */
     public static Integer processInChunks(
-        ProcessingConfig config,
-        ChunkProcessor processor
+    ProcessingConfig config,
+    ChunkProcessor processor
     ) {
         Integer totalProcessed = 0;
         Integer iterations = 0;
@@ -208,7 +209,7 @@ public with sharing class LargeDataProcessor {
                 totalProcessed += chunk.size();
             } catch (Exception e) {
                 System.debug(LoggingLevel.ERROR,
-                    'Chunk processing failed at iteration ' + iterations + ': ' + e.getMessage());
+                'Chunk processing failed at iteration ' + iterations + ': ' + e.getMessage());
                 break;
             }
 
@@ -221,7 +222,7 @@ public with sharing class LargeDataProcessor {
             if (config.monitorHeap && iterations % HEAP_CHECK_FREQUENCY == 0) {
                 HeapSizeManager.HeapStats stats = stream.getLastHeapStats();
                 System.debug('Heap usage at iteration ' + iterations + ': ' +
-                           HeapSizeManager.formatBytes(stats.currentHeapSize));
+                HeapSizeManager.formatBytes(stats.currentHeapSize));
 
                 if (stats.status == 'CRITICAL') {
                     System.debug('Stopping due to critical heap usage');
@@ -241,14 +242,14 @@ public with sharing class LargeDataProcessor {
     }
 
     /**
-     * @description Efficiently aggregate large data sets
-     * @param query String SOQL query
-     * @param aggregator Custom aggregator implementation
-     * @return Object aggregated result
-     */
+    * @description Efficiently aggregate large data sets
+    * @param query String SOQL query
+    * @param aggregator Custom aggregator implementation
+    * @return Object aggregated result
+    */
     public static Object aggregateLargeDataSet(
-        String query,
-        DataAggregator aggregator
+    String query,
+    DataAggregator aggregator
     ) {
         DataStream stream = new DataStream(query, DEFAULT_CHUNK_SIZE);
         aggregator.initialize();
@@ -278,14 +279,14 @@ public with sharing class LargeDataProcessor {
     }
 
     /**
-     * @description Memory-efficient record transformation
-     * @param sourceQuery String query for source records
-     * @param transformer Record transformer implementation
-     * @return List of transformed records
-     */
+    * @description Memory-efficient record transformation
+    * @param sourceQuery String query for source records
+    * @param transformer Record transformer implementation
+    * @return List of transformed records
+    */
     public static List<Object> transformLargeDataSet(
-        String sourceQuery,
-        RecordTransformer transformer
+    String sourceQuery,
+    RecordTransformer transformer
     ) {
         List<Object> results = new List<Object>();
         DataStream stream = new DataStream(sourceQuery, DEFAULT_CHUNK_SIZE);
@@ -296,73 +297,73 @@ public with sharing class LargeDataProcessor {
             for (SObject record : chunk) {
                 // Check if we have heap space for transformation
                 if (!HeapSizeManager.hasEnoughHeap(10240)) { // 10KB buffer
-                    System.debug('Insufficient heap for transformation');
-                    return results;
-                }
-
-                Object transformed = transformer.transform(record);
-                if (transformed != null) {
-                    results.add(transformed);
-                }
+                System.debug('Insufficient heap for transformation');
+                return results;
             }
 
-            // Clear source chunk
-            chunk.clear();
+            Object transformed = transformer.transform(record);
+            if (transformed != null) {
+                results.add(transformed);
+            }
         }
 
-        return results;
+        // Clear source chunk
+        chunk.clear();
     }
 
-    /**
-     * @description Get count of records with timeout
-     * @param baseQuery String query without COUNT()
-     * @return Integer record count or -1 if timeout
-     */
-    private static Integer getRecordCount(String baseQuery) {
-        Long startTime = System.currentTimeMillis();
-        Long timeout = 5000; // 5 second timeout for count
+    return results;
+}
 
-        try {
-            // Extract FROM clause
-            String countQuery = 'SELECT COUNT() ' +
-                baseQuery.substringAfter('FROM').substringBefore('ORDER BY');
+/**
+* @description Get count of records with timeout
+* @param baseQuery String query without COUNT()
+* @return Integer record count or -1 if timeout
+*/
+private static Integer getRecordCount(String baseQuery) {
+    Long startTime = System.currentTimeMillis();
+    Long timeout = 5000; // 5 second timeout for count
 
-            Integer count = Database.countQuery(countQuery);
+    try {
+        // Extract FROM clause
+        String countQuery = 'SELECT COUNT() ' +
+        baseQuery.substringAfter('FROM').substringBefore('ORDER BY');
 
-            Long elapsed = System.currentTimeMillis() - startTime;
-            if (elapsed > timeout) {
-                System.debug('Count query timeout: ' + elapsed + 'ms');
-                return -1;
-            }
+        Integer count = Database.countQuery(countQuery);
 
-            return count;
-
-        } catch (Exception e) {
-            System.debug(LoggingLevel.WARN, 'Count query failed: ' + e.getMessage());
+        Long elapsed = System.currentTimeMillis() - startTime;
+        if (elapsed > timeout) {
+            System.debug('Count query timeout: ' + elapsed + 'ms');
             return -1;
         }
-    }
 
-    /**
-     * @description Interface for chunk processing
-     */
-    public interface ChunkProcessor {
-        void processChunk(List<SObject> records, Integer chunkNumber);
-    }
+        return count;
 
-    /**
-     * @description Interface for data aggregation
-     */
-    public interface DataAggregator {
-        void initialize();
-        void aggregateChunk(List<SObject> records);
-        Object getResult();
+    } catch (Exception e) {
+        System.debug(LoggingLevel.WARN, 'Count query failed: ' + e.getMessage());
+        return -1;
     }
+}
 
-    /**
-     * @description Interface for record transformation
-     */
-    public interface RecordTransformer {
-        Object transform(SObject record);
-    }
+/**
+* @description Interface for chunk processing
+*/
+public interface ChunkProcessor {
+    void processChunk(List<SObject> records, Integer chunkNumber);
+}
+
+/**
+* @description Interface for data aggregation
+*/
+public interface DataAggregator {
+    void initialize();
+    void aggregateChunk(List<SObject> records);
+    Object getResult();
+}
+
+/**
+* @description Interface for record transformation
+*/
+public interface RecordTransformer {
+    Object transform(SObject record);
+}
 }

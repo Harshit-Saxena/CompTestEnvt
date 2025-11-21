@@ -2,9 +2,10 @@
  * @description Test class for heap management utilities
  * @author CompTestEnvt Team
  * @date 2024
+ * @jira [SF-1] - Test coverage for heap management utilities
  */
 @IsTest
-private class HeapManagementTest {
+private with sharing class HeapManagementTest {
 
     @TestSetup
     static void setup() {
@@ -12,21 +13,21 @@ private class HeapManagementTest {
         List<Account> accounts = new List<Account>();
         for (Integer i = 0; i < 200; i++) {
             accounts.add(new Account(
-                Name = 'Test Account ' + i,
-                Phone = '555-' + String.valueOf(1000 + i),
-                BillingCity = 'Test City',
-                BillingState = 'TS',
-                BillingCountry = 'Test Country',
-                Type = Math.mod(i, 3) == 0 ? 'Customer' : 'Prospect',
-                Industry = Math.mod(i, 2) == 0 ? 'Technology' : 'Healthcare'
+            Name = 'Test Account ' + i,
+            Phone = '555-' + String.valueOf(1000 + i),
+            BillingCity = 'Test City',
+            BillingState = 'TS',
+            BillingCountry = 'Test Country',
+            Type = Math.mod(i, 3) == 0 ? 'Customer' : 'Prospect',
+            Industry = Math.mod(i, 2) == 0 ? 'Technology' : 'Healthcare'
             ));
         }
         insert accounts;
     }
 
     /**
-     * @description Test HeapSizeManager heap statistics
-     */
+    * @description Test HeapSizeManager heap statistics
+    */
     @IsTest
     static void testGetCurrentHeapStats() {
         Test.startTest();
@@ -44,8 +45,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test heap monitoring
-     */
+    * @description Test heap monitoring
+    */
     @IsTest
     static void testMonitorHeap() {
         Test.startTest();
@@ -58,8 +59,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test optimal batch size calculation
-     */
+    * @description Test optimal batch size calculation
+    */
     @IsTest
     static void testCalculateOptimalBatchSize() {
         Test.startTest();
@@ -80,8 +81,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test safe query functionality
-     */
+    * @description Test safe query functionality
+    */
     @IsTest
     static void testSafeQuery() {
         Test.startTest();
@@ -96,8 +97,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test format bytes utility
-     */
+    * @description Test format bytes utility
+    */
     @IsTest
     static void testFormatBytes() {
         Test.startTest();
@@ -114,15 +115,15 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test LargeDataProcessor paginated records
-     */
+    * @description Test LargeDataProcessor paginated records
+    */
     @IsTest
     static void testGetPaginatedRecords() {
         Test.startTest();
 
         String query = 'SELECT Id, Name, Phone FROM Account';
         LargeDataProcessor.PaginatedResult result =
-            LargeDataProcessor.getPaginatedRecords(query, 1, 50);
+        LargeDataProcessor.getPaginatedRecords(query, 1, 50);
 
         Test.stopTest();
 
@@ -133,8 +134,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test DataStream functionality
-     */
+    * @description Test DataStream functionality
+    */
     @IsTest
     static void testDataStream() {
         Test.startTest();
@@ -154,8 +155,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test chunk processing
-     */
+    * @description Test chunk processing
+    */
     @IsTest
     static void testProcessInChunks() {
         Test.startTest();
@@ -176,8 +177,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test MemoryOptimizer SObject optimization
-     */
+    * @description Test MemoryOptimizer SObject optimization
+    */
     @IsTest
     static void testOptimizeSObjectList() {
         List<Account> accounts = [SELECT Id, Name, Phone, BillingCity, Type FROM Account LIMIT 50];
@@ -186,7 +187,7 @@ private class HeapManagementTest {
         Test.startTest();
 
         MemoryOptimizer.OptimizationStats stats =
-            MemoryOptimizer.optimizeSObjectList(accounts, fieldsToKeep);
+        MemoryOptimizer.optimizeSObjectList(accounts, fieldsToKeep);
 
         Test.stopTest();
 
@@ -195,8 +196,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test string deduplication
-     */
+    * @description Test string deduplication
+    */
     @IsTest
     static void testDeduplicateStrings() {
         List<String> strings = new List<String>();
@@ -214,8 +215,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test map compression
-     */
+    * @description Test map compression
+    */
     @IsTest
     static void testCompressMap() {
         Map<String, Object> testMap = new Map<String, Object>{
@@ -237,8 +238,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test lazy loader
-     */
+    * @description Test lazy loader
+    */
     @IsTest
     static void testLazyLoader() {
         Test.startTest();
@@ -261,16 +262,16 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test efficient string builder
-     */
+    * @description Test efficient string builder
+    */
     @IsTest
     static void testEfficientStringBuilder() {
         Test.startTest();
 
         MemoryOptimizer.EfficientStringBuilder builder = new MemoryOptimizer.EfficientStringBuilder();
         builder.append('Hello')
-               .append(' ')
-               .append('World');
+        .append(' ')
+        .append('World');
 
         String result = builder.toString();
         Integer estimatedSize = builder.getEstimatedSize();
@@ -282,8 +283,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test bounded cache
-     */
+    * @description Test bounded cache
+    */
     @IsTest
     static void testBoundedCache() {
         Test.startTest();
@@ -306,8 +307,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test chunk splitting
-     */
+    * @description Test chunk splitting
+    */
     @IsTest
     static void testSplitIntoChunks() {
         List<Object> largeList = new List<Object>();
@@ -327,8 +328,8 @@ private class HeapManagementTest {
     }
 
     /**
-     * @description Test JSON optimization
-     */
+    * @description Test JSON optimization
+    */
     @IsTest
     static void testOptimizeJson() {
         String prettyJson = '{\n  "name": "test",\n  "value": 123\n}';
@@ -345,7 +346,7 @@ private class HeapManagementTest {
 
     // Test helper classes
 
-    public class TestChunkProcessor implements LargeDataProcessor.ChunkProcessor {
+    public with sharing class TestChunkProcessor implements LargeDataProcessor.ChunkProcessor {
         public Integer chunksProcessed = 0;
         public Integer totalRecords = 0;
 
