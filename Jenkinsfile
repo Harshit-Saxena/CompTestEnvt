@@ -55,8 +55,8 @@ pipeline {
         // Skip default checkout
         skipDefaultCheckout()
 
-        // ANSI color output
-        ansiColor('xterm')
+        // ANSI color output (requires AnsiColor plugin - disabled for compatibility)
+        // ansiColor('xterm')
     }
 
     parameters {
