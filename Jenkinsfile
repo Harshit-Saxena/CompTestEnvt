@@ -88,7 +88,7 @@ pipeline {
                 script {
                     echo "Installing NPM dependencies..."
                     dir("${SFDC_PROJECT_DIR}") {
-                        bat 'npm ci'
+                        bat 'npm install'
                     }
                 }
             }
